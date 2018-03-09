@@ -6,6 +6,8 @@ Ported from a [javascript version](https://gist.github.com/tmcw/4977508)
 \- itself ported from Fortran and described here by
 [Tom MacWright](https://macwright.org/2013/02/18/literate-jenks.html).
 
+[![Build Status](https://travis-ci.org/ThinkingLogic/jenks.svg?branch=master)](https://travis-ci.org/ThinkingLogic/jenks)
+
 ## Usage
 
 ```
