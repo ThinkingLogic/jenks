@@ -22,7 +22,15 @@ data := []float64{1, 2, 3,  12, 13, 14,  21, 22, 23,  27, 28, 29}
 
 breaks := jenks.NaturalBreaks(data, 4)
 // [1, 12, 21, 27]
+
+allBreaks := jenks.AllNaturalBreaks(data, 4)
+// [ [1, 21]
+//   [1, 12, 21]
+//   [1, 12, 21, 27] ]
 ```
+
+
+
 
 ## License
 This software is Licenced under the [MIT License](LICENSE.md).
