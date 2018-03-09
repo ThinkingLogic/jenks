@@ -7,6 +7,7 @@ Ported from a [javascript version](https://gist.github.com/tmcw/4977508)
 [Tom MacWright](https://macwright.org/2013/02/18/literate-jenks.html).
 
 [![Build Status](https://travis-ci.org/ThinkingLogic/jenks.svg?branch=master)](https://travis-ci.org/ThinkingLogic/jenks)
+[![Coverage Status](https://coveralls.io/repos/github/ThinkingLogic/jenks/badge.svg)](https://coveralls.io/github/ThinkingLogic/jenks)
 
 ## Usage
 
