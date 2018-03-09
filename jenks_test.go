@@ -6,7 +6,7 @@ import (
 	"github.com/ThinkingLogic/jenks"
 )
 
-func TestGetNaturalBreaks(t *testing.T) {
+func TestNaturalBreaks(t *testing.T) {
 	type args struct {
 		data     []float64
 		nClasses int
@@ -39,6 +39,41 @@ func TestGetNaturalBreaks(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := jenks.NaturalBreaks(tt.args.data, tt.args.nClasses); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NaturalBreaks() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestAllNaturalBreaks(t *testing.T) {
+	type args struct {
+		data       []float64
+		maxClasses int
+	}
+	tests := []struct {
+		name string
+		args args
+		want [][]float64
+	}{
+		{name: "two to four breaks",
+			args: args{maxClasses: 4, data: []float64{1, 2, 3, 12, 13, 14, 21, 22, 23, 27, 28, 29}},
+			want: [][]float64{
+				{1, 21},
+				{1, 12, 21},
+				{1, 12, 21, 27},
+			},
+		},
+		{name: "more breaks than unique values",
+			args: args{maxClasses: 10, data: []float64{1, 2, 4, 1, 2, 4, 1, 2, 4}},
+			want: [][]float64{
+				{1, 4},
+				{1, 2, 4},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := jenks.AllNaturalBreaks(tt.args.data, tt.args.maxClasses); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AllNaturalBreaks() = %v, want %v", got, tt.want)
 			}
 		})
 	}

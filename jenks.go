@@ -12,7 +12,6 @@ import (
 // NaturalBreaks returns the best nClasses natural breaks in the data,
 // using the Jenks natural breaks classification method (http://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization).
 // It tries to maximize the similarity of numbers in groups while maximizing the distance between the groups.
-// data is not assumed to be sorted, but if it is that will save creating a copy.
 func NaturalBreaks(data []float64, nClasses int) []float64 {
 	// sort data in numerical order, since this is expected by the matrices function
 	data = sortData(data)
@@ -27,7 +26,32 @@ func NaturalBreaks(data []float64, nClasses int) []float64 {
 	lowerClassLimits, _ := getMatrices(data, nClasses)
 
 	// extract nClasses out of the computed matrices
-	return breaks(data, lowerClassLimits, nClasses);
+	return breaks(data, lowerClassLimits, nClasses)
+}
+
+// AllNaturalBreaks finds all natural breaks in the data, for every set of breaks between 2 breaks and maxClasses.
+// Uses the Jenks natural breaks classification method (http://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization).
+// It tries to maximize the similarity of numbers in groups while maximizing the distance between the groups.
+func AllNaturalBreaks(data []float64, maxClasses int) [][]float64 {
+	// sort data in numerical order, since this is expected by the matrices function
+	data = sortData(data)
+
+	// sanity check
+	uniq := deduplicate(data)
+	if maxClasses > len(uniq) {
+		maxClasses = len(uniq)
+	}
+
+	// get our basic matrices (we only need lower class limits here)
+	lowerClassLimits, _ := getMatrices(data, maxClasses)
+
+	// extract nClasses out of the computed matrices
+	allBreaks := [][]float64{}
+	for i := 2; i <= maxClasses; i++ {
+		nClasses := breaks(data, lowerClassLimits, i)
+		allBreaks = append(allBreaks, nClasses)
+	}
+	return allBreaks
 }
 
 // sortData checks to see if the data is sorted, returning it unchanged if so. Otherwise, it creates and sorts a copy.
@@ -41,17 +65,17 @@ func sortData(data []float64) []float64 {
 	return data
 }
 
-// deduplicate returns a de-duplicated copy of the given slice
+// deduplicate returns a de-duplicated copy of the given slice, retaining the original order.
 func deduplicate(data []float64) []float64 {
 	keys := make(map[float64]bool)
-	list := []float64{}
+	uniq := []float64{}
 	for _, entry := range data {
 		if _, value := keys[entry]; !value {
 			keys[entry] = true
-			list = append(list, entry)
+			uniq = append(uniq, entry)
 		}
 	}
-	return list
+	return uniq
 }
 
 // getMatrices Computes the matrices required for Jenks breaks.
@@ -76,12 +100,12 @@ func getMatrices(data []float64, nClasses int) ([][]int, [][]float64) {
 	}
 
 	for i := 1; i < nClasses+1; i++ {
-		lowerClassLimits[1][i] = 1;
-		varianceCombinations[1][i] = 0;
+		lowerClassLimits[1][i] = 1
+		varianceCombinations[1][i] = 0
 		// in the original implementation, 'Infinity' is used but
 		// math.MaxFloat64 will do.
 		for j := 2; j < len(data)+1; j++ {
-			varianceCombinations[j][i] = math.MaxFloat64;
+			varianceCombinations[j][i] = math.MaxFloat64
 		}
 	}
 
@@ -101,20 +125,20 @@ func getMatrices(data []float64, nClasses int) ([][]int, [][]float64) {
 			// 'III' originally
 			lowerClassLimit := l - m + 1
 			currentIndex := lowerClassLimit - 1
-			val := data[currentIndex];
+			val := data[currentIndex]
 
 			// here we're estimating variance for each potential classing
 			// of the data, for each potential number of classes.
-			w++;
+			w++
 
 			// increase the current sum and sum-of-squares
-			sum += val;
-			sumSquares += val * val;
+			sum += val
+			sumSquares += val * val
 
 			// the variance at this point in the sequence is the difference
 			// between the sum of squares and the total x 2, over the number
 			// of samples.
-			variance = sumSquares - (sum*sum)/w;
+			variance = sumSquares - (sum*sum)/w
 			if currentIndex != 0 {
 				for j := 2; j < nClasses+1; j++ {
 					// if adding this element to an existing class
@@ -123,7 +147,7 @@ func getMatrices(data []float64, nClasses int) ([][]int, [][]float64) {
 					// at this point.
 					if varianceCombinations[l][j] >= (variance + varianceCombinations[currentIndex][j-1]) {
 						lowerClassLimits[l][j] = lowerClassLimit
-						varianceCombinations[l][j] = variance + varianceCombinations[currentIndex][j-1];
+						varianceCombinations[l][j] = variance + varianceCombinations[currentIndex][j-1]
 					}
 				}
 			}
@@ -146,16 +170,16 @@ func breaks(data []float64, lowerClassLimits [][]int, nClasses int) []float64 {
 
 	// the calculation of classes will never include the lower bound, so we need to explicitly set it
 	// the upper bound is not included in the result - but it would be the maximum value in the data
-	classBoundaries[0] = data[0];
+	classBoundaries[0] = data[0]
 
 	// the lowerClassLimits matrix is used as indexes into itself here:
 	// the next value of `k` is obtained from .
 	k := len(data) - 1
 	for i := nClasses; i > 1; i -- {
 		boundaryIndex := lowerClassLimits[k][i] - 1
-		classBoundaries[i-1] = data[boundaryIndex];
-		k = boundaryIndex;
+		classBoundaries[i-1] = data[boundaryIndex]
+		k = boundaryIndex
 	}
 
-	return classBoundaries;
+	return classBoundaries
 }
