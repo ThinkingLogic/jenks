@@ -1,6 +1,8 @@
 # Jenks Natural Breaks
 
 A Golang implementation of the [Jenks natural breaks optimization](http://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization) algorithm.
+It is a data clustering algorithm designed to determine the best arrangement of values into different classes,
+seeking to reduce the variance within classes and maximize the variance between classes.
 
 Ported from a [javascript version](https://gist.github.com/tmcw/4977508)
 \- itself ported from Fortran and described here by
@@ -36,7 +38,7 @@ should be:
 ```
 kclass[countNum - 1] = data[lower_class_limits[k][countNum] - 1];
 ```
-\- it has been fixed in this version, along with a number of minor improvements
+\- it has been fixed here, along with a number of minor improvements
 (such as not returning the upper bound so that the length of the returned slice
  matches the requested number of classes).
 
