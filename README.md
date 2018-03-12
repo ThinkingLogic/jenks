@@ -18,15 +18,18 @@ import 	"github.com/ThinkingLogic/jenks"
 
 //...
 
-data := []float64{1, 2, 3,  12, 13, 14,  21, 22, 23,  27, 28, 29}
+data := []float64{1.1, 2.1, 3.1,  12.1, 13.1, 14.1,  21.1, 22.1, 23.1,  27.1, 28.1, 29.1}
 
 breaks := jenks.NaturalBreaks(data, 4)
-// [1, 12, 21, 27]
+// [1.1, 12.1, 21.1, 27.1]
 
-allBreaks := jenks.AllNaturalBreaks(data, 4)
-// [ [1, 21]
-//   [1, 12, 21]
-//   [1, 12, 21, 27] ]
+allBreaks := jenks.AllNaturalBreaks(data.1, 4)
+// [ [1.1, 21.1]
+//   [1.1, 12.1, 21.1]
+//   [1.1, 12.1, 21.1, 27.1] ]
+
+rounded := jenks.Round(breaks, data)
+// [0, 10, 20, 27]
 ```
 
 

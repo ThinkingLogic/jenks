@@ -3,6 +3,9 @@ package jenks
 import (
 	"math"
 	"sort"
+	"fmt"
+	"strings"
+	"strconv"
 )
 
 // Jenks natural breaks optimization (http://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization)
@@ -52,6 +55,43 @@ func AllNaturalBreaks(data []float64, maxClasses int) [][]float64 {
 		allBreaks = append(allBreaks, nClasses)
 	}
 	return allBreaks
+}
+
+// Round rounds the values of the given breaks as much as possible without changing the membership of each class.
+// e.g. will attempt to round 111.11 to 111.1, then 111, then 110, then 100, then 0
+// - ensuring that using the rounded break value doesn't change the membership of any class.
+func Round(breaks []float64, data []float64) []float64 {
+	data = sortData(data)
+	rounded := make([]float64, len(breaks))
+	for breakIdx := range breaks {
+		// floor is the value that this break must remain above
+		dataIdx := sort.SearchFloat64s(data, breaks[breakIdx])
+		var floor float64
+		if dataIdx == 0 { // make sure we can't go below breaks[i] - (breaks[i+1]-breaks[i])
+			floor = data[0] - (breaks[breakIdx+1]-breaks[breakIdx])
+		} else {
+			floor = data[dataIdx-1]
+		}
+		rounded[breakIdx] = roundValue(breaks[breakIdx], floor)
+	}
+	return rounded
+}
+
+// roundValue works by replacing each digit (from right to left) with 0 until the value is no longer above the floor value.
+func roundValue(initialValue float64, floor float64) float64 {
+	b := []byte(strings.Trim(fmt.Sprintf("%f", initialValue), "0"))
+	value := initialValue
+	for i := len(b)-1; i >= 0; i-- {
+		if b[i] != '.' {
+			b[i] = '0'
+			round, e := strconv.ParseFloat(string(b), 64)
+			if e != nil || round <= floor {
+				return value
+			}
+			value = round
+		}
+	}
+	return value
 }
 
 // sortData checks to see if the data is sorted, returning it unchanged if so. Otherwise, it creates and sorts a copy.

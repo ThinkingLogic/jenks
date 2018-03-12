@@ -78,3 +78,35 @@ func TestAllNaturalBreaks(t *testing.T) {
 		})
 	}
 }
+
+func TestRound(t *testing.T) {
+	type args struct {
+		data       []float64
+		breaks     []float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want []float64
+	}{
+		{name: "Round at small scale",
+			args: args{breaks: []float64{1.1, 12.1, 21.1, 27.1}, data: []float64{1.1, 2.1, 3.1, 12.1, 13.1, 14.1, 21.1, 22.1, 23.1, 27.1, 28.1, 29.1}},
+			want: []float64{0, 10, 20, 27},
+		},
+		{name: "Round at large scale",
+			args: args{breaks: []float64{101, 1201, 2101, 2701}, data: []float64{101, 201, 1001, 1201, 1301, 1401, 2101, 2201, 2301, 2701, 2801, 2901}},
+			want: []float64{0, 1200, 2000, 2700},
+		},
+		{name: "Don't round lowest bound below diff between lowest and next lowest",
+			args: args{breaks: []float64{1.01, 2.01, 2.51}, data: []float64{1.01, 1.11, 1.12, 2.01, 2.11, 2.12, 2.51, 2.61, 2.72}},
+			want: []float64{1, 2, 2.5},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := jenks.Round(tt.args.breaks, tt.args.data); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Round() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
