@@ -52,6 +52,9 @@ func AllNaturalBreaks(data []float64, maxClasses int) [][]float64 {
 	allBreaks := [][]float64{}
 	for i := 2; i <= maxClasses; i++ {
 		nClasses := breaks(data, lowerClassLimits, i)
+		if i == len(uniq) {
+			nClasses = uniq
+		}
 		allBreaks = append(allBreaks, nClasses)
 	}
 	return allBreaks
