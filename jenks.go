@@ -12,6 +12,36 @@ import (
 // Based on the javascript implementation: https://gist.github.com/tmcw/4977508
 // though that implementation has a bug - it has been fixed here.
 
+func BestNaturalBreaks(data []float64, maxClasses int, minGvf float64) []float64 {
+	data = sortData(data)
+
+	uniq := countUniqueValues(data)
+	if maxClasses >= uniq {
+		if uniq <= 2 {
+			return deduplicate(data)
+		}
+		maxClasses = uniq
+	}
+
+	lowerClassLimits, _ := getMatrices(data, maxClasses)
+	var bestGvf float64
+	var bestClass = 1
+
+	for nClasses := 2; nClasses <= maxClasses; nClasses++ {
+		gvf := goodnessOfVarianceFit(data, lowerClassLimits, maxClasses, nClasses)
+
+		if gvf > bestGvf {
+			bestGvf, bestClass = gvf, nClasses
+		}
+
+		if gvf >= minGvf {
+			break
+		}
+	}
+
+	return breaks(data, lowerClassLimits, maxClasses, bestClass)
+}
+
 // NaturalBreaks returns the best nClasses natural breaks in the data,
 // using the Jenks natural breaks classification method (http://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization).
 // It tries to maximize the similarity of numbers in groups while maximizing the distance between the groups.
@@ -99,10 +129,8 @@ func roundValue(initialValue float64, floor float64) float64 {
 // sortData checks to see if the data is sorted, returning it unchanged if so. Otherwise, it creates and sorts a copy.
 func sortData(data []float64) []float64 {
 	if !sort.Float64sAreSorted(data) {
-		data2 := make([]float64, len(data))
-		copy(data2, data)
-		sort.Float64s(data2)
-		data = data2
+		data = copyFloat64s(data)
+		sort.Float64s(data)
 	}
 	return data
 }
@@ -228,24 +256,30 @@ func getMatrices(data []float64, nClasses int) ([]int, []float64) {
 	return lowerClassLimits, varianceCombinations
 }
 
-// breaks is the second part of the jenks recipe:
-// take the calculated matrices and derive an array of n breaks.
-func breaks(data []float64, lowerClassLimits []int, maxClasses int, nClasses int) []float64 {
+func forEachBreak(data []float64, lowerClassLimits []int, maxClasses int, nClasses int, do func(class, boundary int)) {
 	y := maxClasses + 1
-	classBoundaries := make([]float64, nClasses)
-
-	// the calculation of classes will never include the lower bound, so we need to explicitly set it
-	// the upper bound is not included in the result - but it would be the maximum value in the data
-	classBoundaries[0] = data[0]
-
 	// the lowerClassLimits matrix is used as indexes into itself here:
 	// the next value of `k` is obtained from .
 	k := len(data) - 1
+
 	for i := nClasses; i > 1; i-- {
-		boundaryIndex := lowerClassLimits[mat2idx(k, i, y)] - 1
-		classBoundaries[i-1] = data[boundaryIndex]
-		k = boundaryIndex
+		k = lowerClassLimits[mat2idx(k, i, y)] - 1
+		do(i, k)
 	}
+
+	// the calculation of classes will never include the lower bound, so we need to explicitly set it
+	// the upper bound is not included in the result - but it would be the maximum value in the data
+	do(1, 0)
+}
+
+// breaks is the second part of the jenks recipe:
+// take the calculated matrices and derive an array of n breaks.
+func breaks(data []float64, lowerClassLimits []int, maxClasses int, nClasses int) []float64 {
+	classBoundaries := make([]float64, nClasses)
+
+	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, func(class, boundary int) {
+		classBoundaries[class-1] = data[boundary]
+	})
 
 	return classBoundaries
 }
@@ -256,4 +290,48 @@ func mat2len(x, y int) int {
 
 func mat2idx(i, j, y int) int {
 	return (i * y) + j
+}
+
+func copyFloat64s(data []float64) []float64 {
+	return append(make([]float64, 0, len(data)), data...)
+}
+
+func mean(data []float64) float64 {
+	if len(data) == 0 {
+		return 0.0
+	}
+	sum := 0.0
+	for _, v := range data {
+		sum += v
+	}
+	return sum / float64(len(data))
+}
+
+func sumOfSquareDeviations(data []float64) float64 {
+	mean := mean(data)
+	sum := 0.0
+	for _, v := range data {
+		diff := v - mean
+		sum += diff * diff
+	}
+	return sum
+}
+
+func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses int, nClasses int) float64 {
+	boundaries := make([]int, nClasses)
+
+	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, func(class, boundary int) {
+		boundaries[class-1] = boundary
+	})
+
+	sdam := sumOfSquareDeviations(data)
+	sdcm := 0.0
+
+	for i, n := 0, len(boundaries)-1; i < n; i++ {
+		b1 := boundaries[i]
+		b2 := boundaries[i+1]
+		sdcm += sumOfSquareDeviations(data[b1:b2])
+	}
+
+	return (sdam - sdcm) / sdam
 }
