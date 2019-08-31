@@ -333,6 +333,9 @@ func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses in
 		if b1 < 0 {
 			panic(fmt.Errorf("lower bound out of bounds: %d < 0; len(data)=%d; class=%d/%d", b1, len(data), nClasses, maxClasses))
 		}
+		if b1 > len(data) {
+			panic(fmt.Errorf("lower bound out of bounds: %d > %d; len(data)=%d; class=%d/%d", b1, len(data), len(data), nClasses, maxClasses))
+		}
 		if b2 > len(data) {
 			panic(fmt.Errorf("upper bound out of bounds: %d > %d; len(data)=%d; class=%d/%d", b2, len(data), len(data), nClasses, maxClasses))
 		}
