@@ -331,13 +331,16 @@ func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses in
 		b1 := boundaries[i]
 		b2 := boundaries[i+1]
 		if b1 < 0 {
-			panic(fmt.Errorf("lower bound out of bounds: %d < 0; len(data)=%d; class=%d/%d", b1, len(data), nClasses, maxClasses))
+			panic(fmt.Errorf("lower bound out of bounds: %d < 0; len(data)=%d; class=%d/%d; index=%d; boundaries=%v", b1, len(data), nClasses, maxClasses, i, boundaries))
 		}
 		if b1 > len(data) {
-			panic(fmt.Errorf("lower bound out of bounds: %d > %d; len(data)=%d; class=%d/%d", b1, len(data), len(data), nClasses, maxClasses))
+			panic(fmt.Errorf("lower bound out of bounds: %d > %d; len(data)=%d; class=%d/%d; index=%d; boundaries=%v", b1, len(data), len(data), nClasses, maxClasses, i, boundaries))
 		}
 		if b2 > len(data) {
-			panic(fmt.Errorf("upper bound out of bounds: %d > %d; len(data)=%d; class=%d/%d", b2, len(data), len(data), nClasses, maxClasses))
+			panic(fmt.Errorf("upper bound out of bounds: %d > %d; len(data)=%d; class=%d/%d; index=%d; boundaries=%v", b2, len(data), len(data), nClasses, maxClasses, i, boundaries))
+		}
+		if b1 > b2 {
+			panic(fmt.Errorf("lower bound greater than upper bound: %d > %d; len(data)=%d; class=%d/%d; index=%d; boundaries=%v", b1, b2, len(data), nClasses, maxClasses, i, boundaries))
 		}
 		sdcm += sumOfSquareDeviations(data[b1:b2])
 	}
