@@ -330,6 +330,12 @@ func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses in
 	for i, n := 0, len(boundaries)-1; i < n; i++ {
 		b1 := boundaries[i]
 		b2 := boundaries[i+1]
+		if b1 < 0 {
+			panic(fmt.Errorf("lower bound out of bounds: %d < 0; len(data)=%d; class=%d/%d", b1, len(data), nClasses, maxClasses))
+		}
+		if b2 > len(data) {
+			panic(fmt.Errorf("upper bound out of bounds: %d > %d; len(data)=%d; class=%d/%d", b2, len(data), len(data), nClasses, maxClasses))
+		}
 		sdcm += sumOfSquareDeviations(data[b1:b2])
 	}
 
