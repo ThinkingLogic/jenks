@@ -16,10 +16,7 @@ func BestNaturalBreaks(data []float64, maxClasses int, minGvf float64) []float64
 	data = sortData(data)
 
 	uniq := countUniqueValues(data)
-	if maxClasses >= uniq {
-		if uniq <= 2 {
-			return deduplicate(data)
-		}
+	if maxClasses > uniq {
 		maxClasses = uniq
 	}
 
@@ -28,7 +25,7 @@ func BestNaturalBreaks(data []float64, maxClasses int, minGvf float64) []float64
 	var bestClass = 1
 
 	for nClasses := 2; nClasses <= maxClasses; nClasses++ {
-		gvf := goodnessOfVarianceFit(data, lowerClassLimits, maxClasses, nClasses)
+		gvf := goodnessOfVarianceFit(data, lowerClassLimits, maxClasses, nClasses, uniq)
 
 		if gvf > bestGvf {
 			bestGvf, bestClass = gvf, nClasses
@@ -39,7 +36,7 @@ func BestNaturalBreaks(data []float64, maxClasses int, minGvf float64) []float64
 		}
 	}
 
-	return breaks(data, lowerClassLimits, maxClasses, bestClass)
+	return breaks(data, lowerClassLimits, maxClasses, bestClass, uniq)
 }
 
 // NaturalBreaks returns the best nClasses natural breaks in the data,
@@ -50,7 +47,8 @@ func NaturalBreaks(data []float64, nClasses int) []float64 {
 	data = sortData(data)
 
 	// sanity check
-	if nClasses >= countUniqueValues(data) {
+	uniq := countUniqueValues(data)
+	if nClasses >= uniq {
 		return deduplicate(data)
 	}
 
@@ -58,7 +56,7 @@ func NaturalBreaks(data []float64, nClasses int) []float64 {
 	lowerClassLimits, _ := getMatrices(data, nClasses)
 
 	// extract nClasses out of the computed matrices
-	return breaks(data, lowerClassLimits, nClasses, nClasses)
+	return breaks(data, lowerClassLimits, nClasses, nClasses, uniq)
 }
 
 // AllNaturalBreaks finds all natural breaks in the data, for every set of breaks between 2 breaks and maxClasses.
@@ -79,12 +77,8 @@ func AllNaturalBreaks(data []float64, maxClasses int) [][]float64 {
 
 	// extract nClasses out of the computed matrices
 	allBreaks := [][]float64{}
-	for i := 2; i <= maxClasses; i++ {
-		nClasses := breaks(data, lowerClassLimits, maxClasses, i)
-		if i == uniq {
-			nClasses = deduplicate(data)
-		}
-		allBreaks = append(allBreaks, nClasses)
+	for nClasses := 2; nClasses <= maxClasses; nClasses++ {
+		allBreaks = append(allBreaks, breaks(data, lowerClassLimits, maxClasses, nClasses, uniq))
 	}
 	return allBreaks
 }
@@ -256,7 +250,25 @@ func getMatrices(data []float64, nClasses int) ([]int, []float64) {
 	return lowerClassLimits, varianceCombinations
 }
 
-func forEachBreak(data []float64, lowerClassLimits []int, maxClasses int, nClasses int, do func(class, boundary int)) {
+func forEachUnique(data []float64, do func(class, boundary int)) {
+	c := countUniqueValues(data)
+
+	for i := len(data) - 1; i > 0; i-- {
+		if data[i] != data[i-1] {
+			do(c, i)
+			c--
+		}
+	}
+
+	do(1, 0)
+}
+
+func forEachBreak(data []float64, lowerClassLimits []int, maxClasses, nClasses, uniq int, do func(class, boundary int)) {
+	if nClasses >= uniq {
+		forEachUnique(data, do)
+		return
+	}
+
 	y := maxClasses + 1
 	// the lowerClassLimits matrix is used as indexes into itself here:
 	// the next value of `k` is obtained from .
@@ -274,13 +286,14 @@ func forEachBreak(data []float64, lowerClassLimits []int, maxClasses int, nClass
 
 // breaks is the second part of the jenks recipe:
 // take the calculated matrices and derive an array of n breaks.
-func breaks(data []float64, lowerClassLimits []int, maxClasses int, nClasses int) []float64 {
-	classBoundaries := make([]float64, nClasses)
+func breaks(data []float64, lowerClassLimits []int, maxClasses, nClasses, uniq int) []float64 {
+	classBoundaries := make([]float64, 0, nClasses)
 
-	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, func(class, boundary int) {
-		classBoundaries[class-1] = data[boundary]
+	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, uniq, func(class, boundary int) {
+		classBoundaries = append(classBoundaries, data[boundary])
 	})
 
+	reverse(classBoundaries)
 	return classBoundaries
 }
 
@@ -317,10 +330,10 @@ func sumOfSquareDeviations(data []float64) float64 {
 	return sum
 }
 
-func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses int, nClasses int) float64 {
+func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses, nClasses, uniq int) float64 {
 	boundaries := make([]int, nClasses)
 
-	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, func(class, boundary int) {
+	forEachBreak(data, lowerClassLimits, maxClasses, nClasses, uniq, func(class, boundary int) {
 		boundaries[class-1] = boundary
 	})
 
@@ -346,4 +359,12 @@ func goodnessOfVarianceFit(data []float64, lowerClassLimits []int, maxClasses in
 	}
 
 	return (sdam - sdcm) / sdam
+}
+
+func reverse(data []float64) {
+	for i, j := 0, len(data)-1; i < j; {
+		data[i], data[j] = data[j], data[i]
+		i++
+		j--
+	}
 }

@@ -4,6 +4,8 @@ A Golang implementation of the [Jenks natural breaks optimization](http://en.wik
 It is a data clustering algorithm designed to determine the best arrangement of values into different classes,
 seeking to reduce the variance within classes and maximize the variance between classes.
 
+This is a fork of [ThinkingLogic/jenks](https://github.com/ThinkingLogic/jenks) which adds new features, bug fixes, and performance improvements.
+
 Ported from a [javascript version](https://gist.github.com/tmcw/4977508)
 \- itself ported from Fortran and described here by
 [Tom MacWright](https://macwright.org/2013/02/18/literate-jenks.html).
