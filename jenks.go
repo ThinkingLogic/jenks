@@ -250,8 +250,8 @@ func getMatrices(data []float64, nClasses int) ([]int, []float64) {
 	return lowerClassLimits, varianceCombinations
 }
 
-func forEachUnique(data []float64, do func(class, boundary int)) {
-	c := countUniqueValues(data)
+func forEachUnique(data []float64, uniq int, do func(class, boundary int)) {
+	c := uniq
 
 	for i := len(data) - 1; i > 0; i-- {
 		if data[i] != data[i-1] {
@@ -265,7 +265,7 @@ func forEachUnique(data []float64, do func(class, boundary int)) {
 
 func forEachBreak(data []float64, lowerClassLimits []int, maxClasses, nClasses, uniq int, do func(class, boundary int)) {
 	if nClasses >= uniq {
-		forEachUnique(data, do)
+		forEachUnique(data, uniq, do)
 		return
 	}
 
