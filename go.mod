@@ -1,3 +1,3 @@
-module github.com/segmentio/jenks
+module github.com/ThinkingLogic/jenks
 
 go 1.12
